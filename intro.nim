@@ -55,16 +55,16 @@ block:
         print http.get(sbs)
 
     nbText: """
-    So what's going on here? First, we tell binarylang to go ahead and create a type called http, for parsing.
-    Next, we use it to define the format of a header. A header has a string, that starts with HTTP/, and then a version.
-    The version is also a string, so we prefix it with a `s`. Then, we look for a space to separate the two, and continue on
-    in a similar fashion. Here, everything we are parsing happens to behave like a string, so we can have all the types be string.
-    An underscore (_) simply signifies that we don't care enough about that value to name it. It is good for what are called
-    "magic" values, or to skip to the field you actually care about.
+So what's going on here? First, we tell binarylang to go ahead and create a type called http, for parsing.
+Next, we use it to define the format of a header. A header has a string, that starts with HTTP/, and then a version.
+The version is also a string, so we prefix it with a `s`. Then, we look for a space to separate the two, and continue on
+in a similar fashion. Here, everything we are parsing happens to behave like a string, so we can have all the types be string.
+An underscore (_) simply signifies that we don't care enough about that value to name it. It is good for what are called
+"magic" values, or to skip to the field you actually care about.
 
-    Since binarylang operates on bitstreams, we turn the string into one, and then tell it to parse into an object.
+Since binarylang operates on bitstreams, we turn the string into one, and then tell it to parse into an object.
 
-    So, we have a functioning parser for the example header. What do we do if we wanted to generate a header though?
+So, we have a functioning parser for the example header. What do we do if we wanted to generate a header though?
     """
 
     nbCode:
@@ -106,15 +106,15 @@ block:
         sbs = newStringBitStream(msg)
         print http2.get(sbs)
     nbText: """
-    Hold on, what's going on here? What's up with all of the weird * and {}? Doesn't * mean a 
-    public property in Nim?"""
-    
-    nbText: """The * can be used for two different things in binarylang. It can be used to either make a field public,
-    or to refer to an existing parser being used as a type. In this case, we can use it to refer to the header
-    type that we defined earlier. As for the `{headers}`, the curly braces denote "read into a seq until the next value can be parsed". 
-    So, what happens is that we try to parse each header, and after parsing each one we see if the next thing on the stream is a
-    newline. If it is, we stop parsing headers and finish, otherwise we keep adding on to that seq. Since HTTP headers use newlines
-    to delimit the different sections, this works out fine.
+Hold on, what's going on here? What's up with all of the weird * and {}? Doesn't * mean a 
+public property in Nim?
+
+The * can be used for two different things in binarylang. It can be used to either make a field public,
+or to refer to an existing parser being used as a type. In this case, we can use it to refer to the header
+type that we defined earlier. As for the `{headers}`, the curly braces denote "read into a seq until the next value can be parsed". 
+So, what happens is that we try to parse each header, and after parsing each one we see if the next thing on the stream is a
+newline. If it is, we stop parsing headers and finish, otherwise we keep adding on to that seq. Since HTTP headers use newlines
+to delimit the different sections, this works out fine.
     """
 # var sbs = newStringBitStream(msg)
 # var data = HTTP.get(sbs)

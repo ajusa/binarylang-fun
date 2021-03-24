@@ -65,6 +65,7 @@ block:
 
     So, we have a functioning parser for the example header. What do we do if we wanted to generate a header though?
     """
+
     nbCode:
         var header = HTTP(version: "1.1", code: "200", msg: "OK")
         sbs = newStringBitStream()
@@ -77,6 +78,42 @@ block:
     Next are the headers. While we could proceed as we did earlier, for each of the headers, it won't quite work.
     HTTP headers can be in a different order, and more importantly, they can be *anything*. So, we need some way to parse
     a sequence of headers. First, let's define a type for the header itself.
+    """
+    nbCode:
+        createParser(header):
+            s: name
+            s: _ = ": "
+            s: value
+            s: _ = "\n"
+        var sbs = newStringBitStream("Server: Apache/2.2.14 (Win32)\n")
+        print header.get(sbs)
+    nbText: """
+    Fantastic! We now have a way to parse a single header line. Of course, we need to handle a list of these
+    somehow. Thankfully, binarylang has us covered.
+    """
+    nbCode:
+        createParser(http2):
+            s: _ = "HTTP/"
+            s: version
+            s: _ = " "
+            s: code
+            s: _ = " "
+            s: msg
+            s: _ = "\n"
+            *header: {headers}
+            s: _ = "\n"
+        sbs = newStringBitStream(msg)
+        print http2.get(sbs)
+    nbText: """
+    Hold on, what's going on here? What's up with all of the weird * and {}? Doesn't * mean a 
+    public property in Nim?"""
+    
+    nbText: """The * can be used for two different things in binarylang. It can be used to either make a field public,
+    or to refer to an existing parser being used as a type. In this case, we can use it to refer to the header
+    type that we defined earlier. As for the `{headers}`, the curly braces denote "read into a seq until the next value can be parsed". 
+    So, what happens is that we try to parse each header, and after parsing each one we see if the next thing on the stream is a
+    newline. If it is, we stop parsing headers and finish, otherwise we keep adding on to that seq. Since HTTP headers use newlines
+    to delimit the different sections, this works out fine.
     """
 # var sbs = newStringBitStream(msg)
 # var data = HTTP.get(sbs)
@@ -128,7 +165,6 @@ block:
 # var output = html.get(test)
 # print output
 # echo pretty %output
-nbShow
 # createParser(Header):
 #     s: name
 #     s: _ = ": "

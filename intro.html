@@ -74,6 +74,60 @@ sbs.seek(<span class="hljs-number">0</span>)
 <p>Next are the headers. While we could proceed as we did earlier, for each of the headers, it won't quite work.
 HTTP headers can be in a different order, and more importantly, they can be <em>anything</em>. So, we need some way to parse
 a sequence of headers. First, let's define a type for the header itself.</p>
+<pre><code class="nim hljs">createParser(header):
+  s:
+    name
+  s:
+    _ = <span class="hljs-string">&quot;: &quot;</span>
+  s:
+    value
+  s:
+    _ = <span class="hljs-string">&quot;</span><span class="hljs-meta">\n</span><span class="hljs-string">&quot;</span>
+<span class="hljs-keyword">var</span> sbs = newStringBitStream(<span class="hljs-string">&quot;Server: Apache/2.2.14 (Win32)</span><span class="hljs-meta">\n</span><span class="hljs-string">&quot;</span>)
+print header.get(sbs)</code></pre>
+<pre><samp>header.get(sbs)=Header(name:"Server", value:"Apache/2.2.14 (Win32)")</samp></pre>
+<p>Fantastic! We now have a way to parse a single header line. Of course, we need to handle a list of these
+somehow. Thankfully, binarylang has us covered.</p>
+<pre><code class="nim hljs">createParser(http2):
+  s:
+    _ = <span class="hljs-string">&quot;HTTP/&quot;</span>
+  s:
+    version
+  s:
+    _ = <span class="hljs-string">&quot; &quot;</span>
+  s:
+    code
+  s:
+    _ = <span class="hljs-string">&quot; &quot;</span>
+  s:
+    msg
+  s:
+    _ = <span class="hljs-string">&quot;</span><span class="hljs-meta">\n</span><span class="hljs-string">&quot;</span>
+  *header
+  s:
+    _ = <span class="hljs-string">&quot;</span><span class="hljs-meta">\n</span><span class="hljs-string">&quot;</span>
+sbs = newStringBitStream(msg)
+print http2.get(sbs)</code></pre>
+<pre><samp>http2.get(sbs)=Http2(
+  version:"1.1",
+  code:"404",
+  msg:"Not Found",
+  headers:@[
+    Header(name:"Date", value:"Sun, 18 Oct 2012 10:36:20 GMT"),
+    Header(name:"Server", value:"Apache/2.2.14 (Win32)"),
+    Header(name:"Content-Length", value:"11"),
+    Header(name:"Connection", value:"Closed"),
+    Header(name:"Content-Type", value:"text/html; charset=iso-8859-1")
+  ]
+)</samp></pre>
+<p>Hold on, what's going on here? What's up with all of the weird * and {}? Doesn't * mean a
+public property in Nim?</p>
+<p>The * can be used for two different things in binarylang. It can be used to either make a field public,
+or to refer to an existing parser being used as a type. In this case, we can use it to refer to the header
+type that we defined earlier. As for the <code>{headers}</code>, the curly braces denote &quot;read into a seq until the next value can be parsed&quot;.
+So, what happens is that we try to parse each header, and after parsing each one we see if the next thing on the stream is a
+newline. If it is, we stop parsing headers and finish, otherwise we keep adding on to that seq. Since HTTP headers use newlines
+to delimit the different sections, this works out fine.</p>
 
 </main>
 <footer>
@@ -148,6 +202,7 @@ the first line in that HTTP header, shall we?
 
     So, we have a functioning parser for the example header. What do we do if we wanted to generate a header though?
     &quot;&quot;&quot;</span>
+
     nbCode:
         <span class="hljs-keyword">var</span> header = <span class="hljs-type">HTTP</span>(version: <span class="hljs-string">&quot;1.1&quot;</span>, code: <span class="hljs-string">&quot;200&quot;</span>, msg: <span class="hljs-string">&quot;OK&quot;</span>)
         sbs = newStringBitStream()
@@ -160,6 +215,42 @@ the first line in that HTTP header, shall we?
     Next are the headers. While we could proceed as we did earlier, for each of the headers, it won't quite work.
     HTTP headers can be in a different order, and more importantly, they can be *anything*. So, we need some way to parse
     a sequence of headers. First, let's define a type for the header itself.
+    &quot;&quot;&quot;</span>
+    nbCode:
+        createParser(header):
+            s: name
+            s: _ = <span class="hljs-string">&quot;: &quot;</span>
+            s: value
+            s: _ = <span class="hljs-string">&quot;</span><span class="hljs-meta">\n</span><span class="hljs-string">&quot;</span>
+        <span class="hljs-keyword">var</span> sbs = newStringBitStream(<span class="hljs-string">&quot;Server: Apache/2.2.14 (Win32)</span><span class="hljs-meta">\n</span><span class="hljs-string">&quot;</span>)
+        print header.get(sbs)
+    nbText: <span class="hljs-string">&quot;&quot;&quot;
+    Fantastic! We now have a way to parse a single header line. Of course, we need to handle a list of these
+    somehow. Thankfully, binarylang has us covered.
+    &quot;&quot;&quot;</span>
+    nbCode:
+        createParser(http2):
+            s: _ = <span class="hljs-string">&quot;HTTP/&quot;</span>
+            s: version
+            s: _ = <span class="hljs-string">&quot; &quot;</span>
+            s: code
+            s: _ = <span class="hljs-string">&quot; &quot;</span>
+            s: msg
+            s: _ = <span class="hljs-string">&quot;</span><span class="hljs-meta">\n</span><span class="hljs-string">&quot;</span>
+            *header: {headers}
+            s: _ = <span class="hljs-string">&quot;</span><span class="hljs-meta">\n</span><span class="hljs-string">&quot;</span>
+        sbs = newStringBitStream(msg)
+        print http2.get(sbs)
+    nbText: <span class="hljs-string">&quot;&quot;&quot;
+    Hold on, what's going on here? What's up with all of the weird * and {}? Doesn't * mean a 
+    public property in Nim?&quot;&quot;&quot;</span>
+    
+    nbText: <span class="hljs-string">&quot;&quot;&quot;The * can be used for two different things in binarylang. It can be used to either make a field public,
+    or to refer to an existing parser being used as a type. In this case, we can use it to refer to the header
+    type that we defined earlier. As for the `{headers}`, the curly braces denote &quot;read into a seq until the next value can be parsed&quot;. 
+    So, what happens is that we try to parse each header, and after parsing each one we see if the next thing on the stream is a
+    newline. If it is, we stop parsing headers and finish, otherwise we keep adding on to that seq. Since HTTP headers use newlines
+    to delimit the different sections, this works out fine.
     &quot;&quot;&quot;</span>
 <span class="hljs-comment"># var sbs = newStringBitStream(msg)</span>
 <span class="hljs-comment"># var data = HTTP.get(sbs)</span>
@@ -211,7 +302,6 @@ the first line in that HTTP header, shall we?
 <span class="hljs-comment"># var output = html.get(test)</span>
 <span class="hljs-comment"># print output</span>
 <span class="hljs-comment"># echo pretty %output</span>
-nbShow
 <span class="hljs-comment"># createParser(Header):</span>
 <span class="hljs-comment">#     s: name</span>
 <span class="hljs-comment">#     s: _ = &quot;: &quot;</span>

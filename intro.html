@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en-us">
+<head>
+  <title>intro.nim</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2280%22>🐳</text></svg>">
+  <meta content="text/html; charset=utf-8" http-equiv="content-type">
+  <meta content="width=device-width, initial-scale=1" name="viewport">
+  <link rel='stylesheet' href='https://unpkg.com/normalize.css/'>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/kognise/water.css@latest/dist/light.min.css">
+  <link rel='stylesheet' href='https://cdn.jsdelivr.net/gh/pietroppeter/nimib/assets/atom-one-light.css'>
+  </head>
+<body>
+<main>
+<h2>Introduction to Binarylang</h2>
+<p>So one day, I'm working on a project and I realize that I need to do some socket level HTTP
+request sending and receiving. Since this is at the socket level, I can't really use the code that is
+a part of the standard library as easily, since parsing HTTP stuff is baked into other functions.</p>
+<p>So, I'm given a response that looks a little something like this:</p>
+<pre><code class="nim hljs"><span class="hljs-keyword">echo</span> msg</code></pre>
+<pre><samp>HTTP/1.1 404 Not Found
+Date: Sun, 18 Oct 2012 10:36:20 GMT
+Server: Apache/2.2.14 (Win32)
+Content-Length: 11
+Connection: Closed
+Content-Type: text/html; charset=iso-8859-1
+
+here is me</samp></pre>
+<p>Now there are quite a few ways to parse this. Regex is probably a pretty good cross language
+way of handling it, although then you'll have <a href="https://blog.codinghorror.com/regular-expressions-now-you-have-two-problems/">two problems instead of one.</a>
+Nim's <code>scanf</code> module would also probably handle this pretty well, as would some sort
+of generic parser using <code>parseutils</code> or <code>npeg</code>.</p>
+<p>However, none of these tools really address an important issue: how do I serialize the object?</p>
+<p>If I want to be able to both parse the HTTP header from a server, and create one as a client,
+shouldn't that code be pretty much identical? Nim has strong meta-programming capabilities,
+why can't I just define what my format looks like and have a parser/serializer generated from that?</p>
+<p>Enter <a href="https://github.com/sealmove/binarylang">binarylang</a>.</p>
+<p>Now, I can <em>declare</em> what my type looks like, and let it generate everything else for me. Let's try parsing just
+the first line in that HTTP header, shall we?</p>
+<pre><code class="nim hljs">createParser(http):
+  s:
+    _ = <span class="hljs-string">&quot;HTTP/&quot;</span>
+  s:
+    version
+  s:
+    _ = <span class="hljs-string">&quot; &quot;</span>
+  s:
+    code
+  s:
+    _ = <span class="hljs-string">&quot; &quot;</span>
+  s:
+    msg
+  s:
+    _ = <span class="hljs-string">&quot;</span><span class="hljs-meta">\n</span><span class="hljs-string">&quot;</span>
+<span class="hljs-keyword">var</span> sbs = newStringBitStream(msg)
+print http.get(sbs)</code></pre>
+<pre><samp>http.get(sbs)=Http(version:"1.1", code:"404", msg:"Not Found")</samp></pre>
+<p>So what's going on here? First, we tell binarylang to go ahead and create a type called http, for parsing.
+Next, we use it to define the format of a header. A header has a string, that starts with HTTP/, and then a version.
+The version is also a string, so we prefix it with a <code>s</code>. Then, we look for a space to separate the two, and continue on
+in a similar fashion. Here, everything we are parsing happens to behave like a string, so we can have all the types be string.
+An underscore (_) simply signifies that we don't care enough about that value to name it. It is good for what are called
+&quot;magic&quot; values, or to skip to the field you actually care about.</p>
+<pre><code>Since binarylang operates on bitstreams, we turn the string into one, and then tell it to parse into an object.
+
+So, we have a functioning parser for the example header. What do we do if we wanted to generate a header though?
+</code></pre>
+<pre><code class="nim hljs"><span class="hljs-keyword">var</span> header = <span class="hljs-type">HTTP</span>(version: <span class="hljs-string">&quot;1.1&quot;</span>, code: <span class="hljs-string">&quot;200&quot;</span>, msg: <span class="hljs-string">&quot;OK&quot;</span>)
+sbs = newStringBitStream()
+http.put(sbs, header)
+sbs.seek(<span class="hljs-number">0</span>)
+<span class="hljs-keyword">echo</span> sbs.readAll</code></pre>
+<pre><samp>HTTP/1.1 200 OK</samp></pre>
+<p>Wow. It pretty much just works.</p>
+<p>Next are the headers. While we could proceed as we did earlier, for each of the headers, it won't quite work.
+HTTP headers can be in a different order, and more importantly, they can be <em>anything</em>. So, we need some way to parse
+a sequence of headers. First, let's define a type for the header itself.</p>
+
+</main>
+<footer>
+<hr>
+<span id="made">made with <a href="https://github.com/pietroppeter/nimib">nimib 🐳</a></span>
+<button id="show" onclick="toggleSourceDisplay()">Show Source</button>
+<section id="source">
+<pre><code class="nim hljs"><span class="hljs-keyword">import</span> binarylang, sequtils, strutils, print, json
+printColors = <span class="hljs-literal">false</span>
+<span class="hljs-keyword">import</span> nimib
+nbInit
+nbText: <span class="hljs-string">&quot;&quot;&quot;
+## Introduction to Binarylang
+So one day, I'm working on a project and I realize that I need to do some socket level HTTP
+request sending and receiving. Since this is at the socket level, I can't really use the code that is
+a part of the standard library as easily, since parsing HTTP stuff is baked into other functions.
+
+So, I'm given a response that looks a little something like this:
+&quot;&quot;&quot;</span>
+
+<span class="hljs-keyword">var</span> msg = <span class="hljs-string">&quot;&quot;&quot;
+HTTP/1.1 404 Not Found
+Date: Sun, 18 Oct 2012 10:36:20 GMT
+Server: Apache/2.2.14 (Win32)
+Content-Length: 11
+Connection: Closed
+Content-Type: text/html; charset=iso-8859-1
+
+here is me
+&quot;&quot;&quot;</span>
+nbCode: <span class="hljs-keyword">echo</span> msg
+
+nbText: <span class="hljs-string">&quot;&quot;&quot;
+Now there are quite a few ways to parse this. Regex is probably a pretty good cross language
+way of handling it, although then you'll have [two problems instead of one.](https://blog.codinghorror.com/regular-expressions-now-you-have-two-problems/)
+Nim's `scanf` module would also probably handle this pretty well, as would some sort
+of generic parser using `parseutils` or `npeg`.
+
+However, none of these tools really address an important issue: how do I serialize the object?
+
+If I want to be able to both parse the HTTP header from a server, and create one as a client,
+shouldn't that code be pretty much identical? Nim has strong meta-programming capabilities,
+why can't I just define what my format looks like and have a parser/serializer generated from that?
+
+Enter [binarylang](https://github.com/sealmove/binarylang).
+
+Now, I can *declare* what my type looks like, and let it generate everything else for me. Let's try parsing just
+the first line in that HTTP header, shall we?
+&quot;&quot;&quot;</span>
+<span class="hljs-keyword">block</span>:
+    nbCode:
+        createParser(http):
+            s: _ = <span class="hljs-string">&quot;HTTP/&quot;</span>
+            s: version
+            s: _ = <span class="hljs-string">&quot; &quot;</span>
+            s: code
+            s: _ = <span class="hljs-string">&quot; &quot;</span>
+            s: msg
+            s: _ = <span class="hljs-string">&quot;</span><span class="hljs-meta">\n</span><span class="hljs-string">&quot;</span>
+        <span class="hljs-keyword">var</span> sbs = newStringBitStream(msg)
+        print http.get(sbs)
+
+    nbText: <span class="hljs-string">&quot;&quot;&quot;
+    So what's going on here? First, we tell binarylang to go ahead and create a type called http, for parsing.
+    Next, we use it to define the format of a header. A header has a string, that starts with HTTP/, and then a version.
+    The version is also a string, so we prefix it with a `s`. Then, we look for a space to separate the two, and continue on
+    in a similar fashion. Here, everything we are parsing happens to behave like a string, so we can have all the types be string.
+    An underscore (_) simply signifies that we don't care enough about that value to name it. It is good for what are called
+    &quot;magic&quot; values, or to skip to the field you actually care about.
+
+    Since binarylang operates on bitstreams, we turn the string into one, and then tell it to parse into an object.
+
+    So, we have a functioning parser for the example header. What do we do if we wanted to generate a header though?
+    &quot;&quot;&quot;</span>
+    nbCode:
+        <span class="hljs-keyword">var</span> header = <span class="hljs-type">HTTP</span>(version: <span class="hljs-string">&quot;1.1&quot;</span>, code: <span class="hljs-string">&quot;200&quot;</span>, msg: <span class="hljs-string">&quot;OK&quot;</span>)
+        sbs = newStringBitStream()
+        http.put(sbs, header)
+        sbs.seek(<span class="hljs-number">0</span>)
+        <span class="hljs-keyword">echo</span> sbs.readAll
+    nbText: <span class="hljs-string">&quot;&quot;&quot;Wow. It pretty much just works.&quot;&quot;&quot;</span>
+<span class="hljs-keyword">block</span>:
+    nbText: <span class="hljs-string">&quot;&quot;&quot;
+    Next are the headers. While we could proceed as we did earlier, for each of the headers, it won't quite work.
+    HTTP headers can be in a different order, and more importantly, they can be *anything*. So, we need some way to parse
+    a sequence of headers. First, let's define a type for the header itself.
+    &quot;&quot;&quot;</span>
+<span class="hljs-comment"># var sbs = newStringBitStream(msg)</span>
+<span class="hljs-comment"># var data = HTTP.get(sbs)</span>
+<span class="hljs-comment"># echo data.code + 10</span>
+<span class="hljs-comment"># var gen: typeGetter(HTTP)</span>
+<span class="hljs-comment"># gen.body = &quot;asdfasdfasdf&quot;</span>
+<span class="hljs-comment"># var content: typeGetter(Header) = (&quot;Content-Length&quot;, &quot;10&quot;)</span>
+<span class="hljs-comment"># gen.version = &quot;1.1&quot;</span>
+<span class="hljs-comment"># gen.headers.add(content)</span>
+<span class="hljs-comment"># var gensbs = newStringBitStream()</span>
+<span class="hljs-comment"># HTTP.put(gensbs, gen)</span>
+<span class="hljs-comment"># gensbs.seek(0)</span>
+<span class="hljs-comment"># echo gensbs.readAll</span>
+
+<span class="hljs-comment"># var test = &quot;&quot;&quot;</span>
+<span class="hljs-comment"># &lt;html&gt;</span>
+<span class="hljs-comment"># &lt;body&gt;</span>
+
+<span class="hljs-comment"># &lt;h1&gt;My First Heading&lt;/h1&gt;</span>
+
+<span class="hljs-comment"># &lt;p&gt;My first paragraph.&lt;/p&gt;</span>
+
+<span class="hljs-comment"># &lt;/body&gt;</span>
+<span class="hljs-comment"># &lt;/html&gt;</span>
+<span class="hljs-comment"># &quot;&quot;&quot;.newStringBitStream</span>
+<span class="hljs-comment"># # var test = &quot;&quot;&quot;</span>
+<span class="hljs-comment"># # &lt;h1&gt;My First Heading&lt;/h1&gt;</span>
+<span class="hljs-comment"># # &quot;&quot;&quot;.newStringBitStream</span>
+<span class="hljs-comment"># template condGet(field, parse, cond: untyped) =</span>
+<span class="hljs-comment">#   if cond:</span>
+<span class="hljs-comment">#       parse</span>
+<span class="hljs-comment"># template condPut(field, encode, cond: untyped) =</span>
+<span class="hljs-comment">#   if cond:</span>
+<span class="hljs-comment">#       encode</span>
+<span class="hljs-comment"># proc stop(s: Bitstream): bool =</span>
+<span class="hljs-comment">#     var pos = s.getPosition</span>
+<span class="hljs-comment">#     var ch = s.readStr(8)</span>
+<span class="hljs-comment">#     result = ch != &quot;/&quot;</span>
+<span class="hljs-comment">#     s.setPosition(pos)</span>
+
+<span class="hljs-comment"># createParser(html):</span>
+<span class="hljs-comment">#     s: text</span>
+<span class="hljs-comment">#     s: _ = &quot;&lt;&quot;</span>
+<span class="hljs-comment">#     s {cond: s.stop}: tag</span>
+<span class="hljs-comment">#     s {cond: s.stop}: _ = &quot;&gt;&quot;</span>
+<span class="hljs-comment">#     *html {cond: s.stop}: {children}</span>
+<span class="hljs-comment">#     s {cond: s.stop}: _ = &quot;/&quot;</span>
+
+<span class="hljs-comment"># var output = html.get(test)</span>
+<span class="hljs-comment"># print output</span>
+<span class="hljs-comment"># echo pretty %output</span>
+nbShow
+<span class="hljs-comment"># createParser(Header):</span>
+<span class="hljs-comment">#     s: name</span>
+<span class="hljs-comment">#     s: _ = &quot;: &quot;</span>
+<span class="hljs-comment">#     s: value</span>
+<span class="hljs-comment">#     s: _ = &quot;\n&quot;</span>
+<span class="hljs-comment"># createParser(HTTP):</span>
+<span class="hljs-comment">#     s: _ = &quot;HTTP/&quot;</span>
+<span class="hljs-comment">#     s: version</span>
+<span class="hljs-comment">#     s: _ = &quot; &quot;</span>
+<span class="hljs-comment">#     s {@get: _.parseInt, @set: $_}: code</span>
+<span class="hljs-comment">#     s: _ = &quot; &quot;</span>
+<span class="hljs-comment">#     s: msg</span>
+<span class="hljs-comment">#     s: _ = &quot;\n&quot;</span>
+<span class="hljs-comment">#     *Header: {headers}</span>
+<span class="hljs-comment">#     s: _ = &quot;\n&quot;</span>
+<span class="hljs-comment">#     s: body(headers.filterIt(it.name == &quot;Content-Length&quot;)[0].value.parseInt)</span>
+
+<span class="hljs-comment"># var sbs = newStringBitStream(msg)</span>
+<span class="hljs-comment"># var data = HTTP.get(sbs)</span>
+<span class="hljs-comment"># echo data.code + 10</span>
+<span class="hljs-comment"># var gen: typeGetter(HTTP)</span>
+<span class="hljs-comment"># gen.body = &quot;asdfasdfasdf&quot;</span>
+<span class="hljs-comment"># var content: typeGetter(Header) = (&quot;Content-Length&quot;, &quot;10&quot;)</span>
+<span class="hljs-comment"># gen.version = &quot;1.1&quot;</span>
+<span class="hljs-comment"># gen.headers.add(content)</span>
+<span class="hljs-comment"># var gensbs = newStringBitStream()</span>
+<span class="hljs-comment"># HTTP.put(gensbs, gen)</span>
+<span class="hljs-comment"># gensbs.seek(0)</span>
+<span class="hljs-comment"># echo gensbs.readAll</span>
+
+<span class="hljs-comment"># var test = &quot;&quot;&quot;</span>
+<span class="hljs-comment"># &lt;html&gt;</span>
+<span class="hljs-comment"># &lt;body&gt;</span>
+
+<span class="hljs-comment"># &lt;h1&gt;My First Heading&lt;/h1&gt;</span>
+
+<span class="hljs-comment"># &lt;p&gt;My first paragraph.&lt;/p&gt;</span>
+
+<span class="hljs-comment"># &lt;/body&gt;</span>
+<span class="hljs-comment"># &lt;/html&gt;</span>
+<span class="hljs-comment"># &quot;&quot;&quot;.newStringBitStream</span>
+<span class="hljs-comment"># # var test = &quot;&quot;&quot;</span>
+<span class="hljs-comment"># # &lt;h1&gt;My First Heading&lt;/h1&gt;</span>
+<span class="hljs-comment"># # &quot;&quot;&quot;.newStringBitStream</span>
+<span class="hljs-comment"># template condGet(field, parse, cond: untyped) =</span>
+<span class="hljs-comment">#   if cond:</span>
+<span class="hljs-comment">#       parse</span>
+<span class="hljs-comment"># template condPut(field, encode, cond: untyped) =</span>
+<span class="hljs-comment">#   if cond:</span>
+<span class="hljs-comment">#       encode</span>
+<span class="hljs-comment"># proc stop(s: Bitstream): bool =</span>
+<span class="hljs-comment">#     var pos = s.getPosition</span>
+<span class="hljs-comment">#     var ch = s.readStr(8)</span>
+<span class="hljs-comment">#     result = ch != &quot;/&quot;</span>
+<span class="hljs-comment">#     s.setPosition(pos)</span>
+
+<span class="hljs-comment"># createParser(html):</span>
+<span class="hljs-comment">#     s: text</span>
+<span class="hljs-comment">#     s: _ = &quot;&lt;&quot;</span>
+<span class="hljs-comment">#     s {cond: s.stop}: tag</span>
+<span class="hljs-comment">#     s {cond: s.stop}: _ = &quot;&gt;&quot;</span>
+<span class="hljs-comment">#     *html {cond: s.stop}: {children}</span>
+<span class="hljs-comment">#     s {cond: s.stop}: _ = &quot;/&quot;</span>
+
+<span class="hljs-comment"># var output = html.get(test)</span>
+<span class="hljs-comment"># print output</span>
+<span class="hljs-comment"># echo pretty %output</span>
+nbSave
+</code></pre>
+</section>
+<script>
+function toggleSourceDisplay() {
+  var btn = document.getElementById("show")
+  var source = document.getElementById("source");
+  if (btn.innerHTML=="Show Source") {
+    btn.innerHTML = "Hide Source";
+    source.style.display = "block";
+  } else {
+    btn.innerHTML = "Show Source";
+    source.style.display = "none";
+  }
+}
+</script>
+<style>
+span#made {
+  font-size: 0.8rem;
+}
+button#show {
+  font-size: 0.8rem;
+}
+
+button#show {
+  float: right;
+  padding: 2px;
+  padding-right: 5px;
+  padding-left: 5px;
+}
+section#source {
+  display:none
+}
+</style>
+</footer>
+</body>
+</html>

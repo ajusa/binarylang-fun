@@ -21,7 +21,8 @@ Content-Type: text/html; charset=iso-8859-1
 
 here is me
 """
-nbCode: echo msg
+nbCode:
+    echo msg
 
 nbText: """
 Now there are quite a few ways to parse this. Regex is probably a pretty good cross language

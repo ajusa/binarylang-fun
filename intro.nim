@@ -52,7 +52,7 @@ block:
             s: msg
             s: _ = "\n"
         var sbs = newStringBitStream(msg)
-        print http.get(sbs)
+        print toHTTP(msg)
 
     nbText: """
 So what's going on here? First, we tell binarylang to go ahead and create a type called http, for parsing.
@@ -69,10 +69,7 @@ So, we have a functioning parser for the example header. What do we do if we wan
 
     nbCode:
         var header = HTTP(version: "1.1", code: "200", msg: "OK")
-        sbs = newStringBitStream()
-        http.put(sbs, header)
-        sbs.seek(0)
-        echo sbs.readAll
+        echo header.fromHTTP
     nbText: """Wow. It pretty much just works."""
 block:
     nbText: """
@@ -86,8 +83,7 @@ block:
             s: _ = ": "
             s: value
             s: _ = "\n"
-        var sbs = newStringBitStream("Server: Apache/2.2.14 (Win32)\n")
-        print header.get(sbs)
+        print "Server: Apache/2.2.14 (Win32)\n".toHeader
     nbText: """
     Fantastic! We now have a way to parse a single header line. Of course, we need to handle a list of these
     somehow. Thankfully, binarylang has us covered.
@@ -103,8 +99,7 @@ block:
             s: _ = "\n"
             *header: {headers}
             s: _ = "\n"
-        sbs = newStringBitStream(msg)
-        print http2.get(sbs)
+        print msg.toHTTP2
     nbText: """
 Hold on, what's going on here? What's up with all of the weird * and {}? Doesn't * mean a 
 public property in Nim?
@@ -233,4 +228,4 @@ to delimit the different sections, this works out fine.
 # var output = html.get(test)
 # print output
 # echo pretty %output
-nbSave
+nbShow

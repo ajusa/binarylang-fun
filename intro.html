@@ -59,7 +59,6 @@ the first line in that HTTP header, shall we?</p>
     s: _ = <span class="hljs-string">&quot; &quot;</span>
     s: msg
     s: _ = <span class="hljs-string">&quot;</span><span class="hljs-meta">\n</span><span class="hljs-string">&quot;</span>
-<span class="hljs-keyword">var</span> sbs = newStringBitStream(msg)
 print toHTTP(msg)</code></pre>
 <pre><samp>toHttp(msg)=Http(version:"1.1", code:"404", msg:"Not Found")</samp></pre>
 <p>So what's going on here? First, we tell binarylang to go ahead and create a type called http, for parsing.
@@ -177,7 +176,6 @@ the first line in that HTTP header, shall we?
             s: _ = <span class="hljs-string">&quot; &quot;</span>
             s: msg
             s: _ = <span class="hljs-string">&quot;</span><span class="hljs-meta">\n</span><span class="hljs-string">&quot;</span>
-        <span class="hljs-keyword">var</span> sbs = newStringBitStream(msg)
         print toHTTP(msg)
 
     nbText: <span class="hljs-string">&quot;&quot;&quot;

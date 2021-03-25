@@ -51,7 +51,6 @@ block:
             s: _ = " "
             s: msg
             s: _ = "\n"
-        var sbs = newStringBitStream(msg)
         print toHTTP(msg)
 
     nbText: """

@@ -51,7 +51,7 @@ nbCode:
         s: _ = "\n"
     print toHTTP(msg)
 
-    nbText: """
+nbText: """
 So what's going on here? First, we tell binarylang to go ahead and create a type called http, for parsing.
 Next, we use it to define the format of a header. A header has a string, that starts with HTTP/, and then a version.
 The version is also a string, so we prefix it with a `s`. Then, we look for a space to separate the two, and continue on
@@ -97,7 +97,8 @@ nbCode:
         *header: {headers}
         s: _ = "\n"
     print msg.toHTTP2
-    nbText: """
+
+nbText: """
 Hold on, what's going on here? What's up with all of the weird * and {}? Doesn't * mean a 
 public property in Nim?
 

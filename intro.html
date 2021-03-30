@@ -51,17 +51,17 @@ why can't I just define what my format looks like and have a parser/serializer g
 <p>Enter <a href="https://github.com/sealmove/binarylang">binarylang</a>.</p>
 <p>Now, I can <em>declare</em> what my type looks like, and let it generate everything else for me. Let's try parsing just
 the first line in that HTTP header, shall we?</p>
-<p>toHttp(msg)=Http(version:&quot;1.1&quot;, code:&quot;404&quot;, msg:&quot;Not Found&quot;)
-So what's going on here? First, we tell binarylang to go ahead and create a type called http, for parsing.
-Next, we use it to define the format of a header. A header has a string, that starts with HTTP/, and then a version.
-The version is also a string, so we prefix it with a <code>s</code>. Then, we look for a space to separate the two, and continue on
-in a similar fashion. Here, everything we are parsing happens to behave like a string, so we can have all the types be string.
-An underscore (_) simply signifies that we don't care enough about that value to name it. It is good for what are called
-&quot;magic&quot; values, or to skip to the field you actually care about.</p>
-<p>Since binarylang operates on bitstreams, we turn the string into one, and then tell it to parse into an object.</p>
-<p>So, we have a functioning parser for the example header. What do we do if we wanted to generate a header though?</p>
-<p>toHttp(msg)=Http(version:&quot;1.1&quot;, code:&quot;404&quot;, msg:&quot;Not Found&quot;)
-So what's going on here? First, we tell binarylang to go ahead and create a type called http, for parsing.
+<pre><code class="nim hljs">createParser(http):
+    s: _ = <span class="hljs-string">&quot;HTTP/&quot;</span>
+    s: version
+    s: _ = <span class="hljs-string">&quot; &quot;</span>
+    s: code
+    s: _ = <span class="hljs-string">&quot; &quot;</span>
+    s: msg
+    s: _ = <span class="hljs-string">&quot;</span><span class="hljs-meta">\n</span><span class="hljs-string">&quot;</span>
+print toHTTP(msg)</code></pre>
+<pre><samp>toHttp(msg)=Http(version:"1.1", code:"404", msg:"Not Found")</samp></pre>
+<p>So what's going on here? First, we tell binarylang to go ahead and create a type called http, for parsing.
 Next, we use it to define the format of a header. A header has a string, that starts with HTTP/, and then a version.
 The version is also a string, so we prefix it with a <code>s</code>. Then, we look for a space to separate the two, and continue on
 in a similar fashion. Here, everything we are parsing happens to behave like a string, so we can have all the types be string.
@@ -85,43 +85,30 @@ print <span class="hljs-string">&quot;Server: Apache/2.2.14 (Win32)</span><span 
 <pre><samp>toHeader("Server: Apache/2.2.14 (Win32)\n")=Header(name:"Server", value:"Apache/2.2.14 (Win32)")</samp></pre>
 <p>Fantastic! We now have a way to parse a single header line. Of course, we need to handle a list of these
 somehow. Thankfully, binarylang has us covered.</p>
-<p>toHttp2(msg)=Http2(
-version:&quot;1.1&quot;,
-code:&quot;404&quot;,
-msg:&quot;Not Found&quot;,
-headers:@[
-Header(name:&quot;Date&quot;, value:&quot;Sun, 18 Oct 2012 10:36:20 GMT&quot;),
-Header(name:&quot;Server&quot;, value:&quot;Apache/2.2.14 (Win32)&quot;),
-Header(name:&quot;Content-Length&quot;, value:&quot;10&quot;),
-Header(name:&quot;Connection&quot;, value:&quot;Closed&quot;),
-Header(name:&quot;Content-Type&quot;, value:&quot;text/html; charset=iso-8859-1&quot;)
-]
-)
-Hold on, what's going on here? What's up with all of the weird * and {}? Doesn't * mean a
-public property in Nim?</p>
-<p>The * can be used for two different things in binarylang. It can be used to either make a field public,
-or to refer to an existing parser being used as a type. In this case, we can use it to refer to the header
-type that we defined earlier. As for the <code>{headers}</code>, the curly braces denote &quot;read into a seq until the next value can be parsed&quot;.
-So, what happens is that we try to parse each header, and after parsing each one we see if the next thing on the stream is a
-newline. If it is, we stop parsing headers and finish, otherwise we keep adding on to that seq. Since HTTP headers use newlines
-to delimit the different sections, this works out fine.</p>
-<p>However, working with a sequence of headers is a little strange.
-It would be nice if it could be accessed as if it were a table in Nim,
-with a string to string mapping. Thankfully, binarylang provides <code>@get</code> and <code>@set</code>, which define procs that can
-be ran on field access or assignment. First, let's define some helper procs to convert between the two.</p>
-<p>toHttp2(msg)=Http2(
-version:&quot;1.1&quot;,
-code:&quot;404&quot;,
-msg:&quot;Not Found&quot;,
-headers:@[
-Header(name:&quot;Date&quot;, value:&quot;Sun, 18 Oct 2012 10:36:20 GMT&quot;),
-Header(name:&quot;Server&quot;, value:&quot;Apache/2.2.14 (Win32)&quot;),
-Header(name:&quot;Content-Length&quot;, value:&quot;10&quot;),
-Header(name:&quot;Connection&quot;, value:&quot;Closed&quot;),
-Header(name:&quot;Content-Type&quot;, value:&quot;text/html; charset=iso-8859-1&quot;)
-]
-)
-Hold on, what's going on here? What's up with all of the weird * and {}? Doesn't * mean a
+<pre><code class="nim hljs">createParser(http2):
+    s: _ = <span class="hljs-string">&quot;HTTP/&quot;</span>
+    s: version
+    s: _ = <span class="hljs-string">&quot; &quot;</span>
+    s: code
+    s: _ = <span class="hljs-string">&quot; &quot;</span>
+    s: msg
+    s: _ = <span class="hljs-string">&quot;</span><span class="hljs-meta">\n</span><span class="hljs-string">&quot;</span>
+    *header: {headers}
+    s: _ = <span class="hljs-string">&quot;</span><span class="hljs-meta">\n</span><span class="hljs-string">&quot;</span>
+print msg.toHTTP2</code></pre>
+<pre><samp>toHttp2(msg)=Http2(
+  version:"1.1",
+  code:"404",
+  msg:"Not Found",
+  headers:@[
+    Header(name:"Date", value:"Sun, 18 Oct 2012 10:36:20 GMT"),
+    Header(name:"Server", value:"Apache/2.2.14 (Win32)"),
+    Header(name:"Content-Length", value:"10"),
+    Header(name:"Connection", value:"Closed"),
+    Header(name:"Content-Type", value:"text/html; charset=iso-8859-1")
+  ]
+)</samp></pre>
+<p>Hold on, what's going on here? What's up with all of the weird * and {}? Doesn't * mean a
 public property in Nim?</p>
 <p>The * can be used for two different things in binarylang. It can be used to either make a field public,
 or to refer to an existing parser being used as a type. In this case, we can use it to refer to the header
@@ -281,7 +268,7 @@ nbCode:
         s: _ = <span class="hljs-string">&quot;</span><span class="hljs-meta">\n</span><span class="hljs-string">&quot;</span>
     print toHTTP(msg)
 
-    nbText: <span class="hljs-string">&quot;&quot;&quot;
+nbText: <span class="hljs-string">&quot;&quot;&quot;
 So what's going on here? First, we tell binarylang to go ahead and create a type called http, for parsing.
 Next, we use it to define the format of a header. A header has a string, that starts with HTTP/, and then a version.
 The version is also a string, so we prefix it with a `s`. Then, we look for a space to separate the two, and continue on
@@ -327,7 +314,8 @@ nbCode:
         *header: {headers}
         s: _ = <span class="hljs-string">&quot;</span><span class="hljs-meta">\n</span><span class="hljs-string">&quot;</span>
     print msg.toHTTP2
-    nbText: <span class="hljs-string">&quot;&quot;&quot;
+
+nbText: <span class="hljs-string">&quot;&quot;&quot;
 Hold on, what's going on here? What's up with all of the weird * and {}? Doesn't * mean a 
 public property in Nim?
 

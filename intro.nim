@@ -1,4 +1,4 @@
-import binarylang, sequtils, strutils, print, json
+import binarylang, sequtils, strutils, print, json, tables
 printColors = false
 import nimib
 nbInit
@@ -15,12 +15,11 @@ var msg = """
 HTTP/1.1 404 Not Found
 Date: Sun, 18 Oct 2012 10:36:20 GMT
 Server: Apache/2.2.14 (Win32)
-Content-Length: 11
+Content-Length: 10
 Connection: Closed
 Content-Type: text/html; charset=iso-8859-1
 
-here is me
-"""
+here is me"""
 nbCode:
     echo msg
 
@@ -41,17 +40,16 @@ Enter [binarylang](https://github.com/sealmove/binarylang).
 Now, I can *declare* what my type looks like, and let it generate everything else for me. Let's try parsing just
 the first line in that HTTP header, shall we?
 """
-block:
-    nbCode:
-        createParser(http):
-            s: _ = "HTTP/"
-            s: version
-            s: _ = " "
-            s: code
-            s: _ = " "
-            s: msg
-            s: _ = "\n"
-        print toHTTP(msg)
+nbCode:
+    createParser(http):
+        s: _ = "HTTP/"
+        s: version
+        s: _ = " "
+        s: code
+        s: _ = " "
+        s: msg
+        s: _ = "\n"
+    print toHTTP(msg)
 
     nbText: """
 So what's going on here? First, we tell binarylang to go ahead and create a type called http, for parsing.
@@ -66,39 +64,39 @@ Since binarylang operates on bitstreams, we turn the string into one, and then t
 So, we have a functioning parser for the example header. What do we do if we wanted to generate a header though?
     """
 
-    nbCode:
-        var header = HTTP(version: "1.1", code: "200", msg: "OK")
-        echo header.fromHTTP
-    nbText: """Wow. It pretty much just works."""
-block:
-    nbText: """
-    Next are the headers. While we could proceed as we did earlier, for each of the headers, it won't quite work.
-    HTTP headers can be in a different order, and more importantly, they can be *anything*. So, we need some way to parse
-    a sequence of headers. First, let's define a type for the header itself.
-    """
-    nbCode:
-        createParser(header):
-            s: name
-            s: _ = ": "
-            s: value
-            s: _ = "\n"
-        print "Server: Apache/2.2.14 (Win32)\n".toHeader
-    nbText: """
-    Fantastic! We now have a way to parse a single header line. Of course, we need to handle a list of these
-    somehow. Thankfully, binarylang has us covered.
-    """
-    nbCode:
-        createParser(http2):
-            s: _ = "HTTP/"
-            s: version
-            s: _ = " "
-            s: code
-            s: _ = " "
-            s: msg
-            s: _ = "\n"
-            *header: {headers}
-            s: _ = "\n"
-        print msg.toHTTP2
+nbCode:
+    var httpHeader = HTTP(version: "1.1", code: "200", msg: "OK")
+    echo httpHeader.fromHTTP
+nbText: """Wow. It pretty much just works."""
+nbText: """
+Next are the headers. While we could proceed as we did earlier, for each of the headers, it won't quite work.
+HTTP headers can be in a different order, and more importantly, they can be *anything*. So, we need some way to parse
+a sequence of headers. First, let's define a type for the header itself.
+"""
+nbCode:
+    createParser(header):
+        s: name
+        s: _ = ": "
+        s: value
+        s: _ = "\n"
+    print "Server: Apache/2.2.14 (Win32)\n".toHeader
+nbText: """
+Fantastic! We now have a way to parse a single header line. Of course, we need to handle a list of these
+somehow. Thankfully, binarylang has us covered.
+"""
+
+nbCode:
+    createParser(http2):
+        s: _ = "HTTP/"
+        s: version
+        s: _ = " "
+        s: code
+        s: _ = " "
+        s: msg
+        s: _ = "\n"
+        *header: {headers}
+        s: _ = "\n"
+    print msg.toHTTP2
     nbText: """
 Hold on, what's going on here? What's up with all of the weird * and {}? Doesn't * mean a 
 public property in Nim?
@@ -109,122 +107,83 @@ type that we defined earlier. As for the `{headers}`, the curly braces denote "r
 So, what happens is that we try to parse each header, and after parsing each one we see if the next thing on the stream is a
 newline. If it is, we stop parsing headers and finish, otherwise we keep adding on to that seq. Since HTTP headers use newlines
 to delimit the different sections, this works out fine.
+
+However, working with a sequence of headers is a little strange. 
+It would be nice if it could be accessed as if it were a table in Nim,
+with a string to string mapping. Thankfully, binarylang provides `@get` and `@set`, which define procs that can
+be ran on field access or assignment. First, let's define some helper procs to convert between the two.
     """
-# var sbs = newStringBitStream(msg)
-# var data = HTTP.get(sbs)
-# echo data.code + 10
-# var gen: typeGetter(HTTP)
-# gen.body = "asdfasdfasdf"
-# var content: typeGetter(Header) = ("Content-Length", "10")
-# gen.version = "1.1"
-# gen.headers.add(content)
-# var gensbs = newStringBitStream()
-# HTTP.put(gensbs, gen)
-# gensbs.seek(0)
-# echo gensbs.readAll
+nbCode:
+    proc toTable(headers: seq[Header]): auto =
+        result = newTable[string, string]()
+        for header in headers:
+            result[header.name] = header.value
+    proc toHeaders(headers: TableRef[string, string]): seq[Header] =
+        for name, value in headers:
+            result.add(Header(name: name, value: value))
+    print msg.toHTTP2.headers.toTable
+    print {"Content-Length": "10"}.newTable.toHeaders
+nbText: """
+I'm using a `TableRef` here due to the `print` macro from [treeform](https://github.com/treeform/print/blob/master/tests/test.nim#L88)
+currently being broken on normal tables.
 
-# var test = """
-# <html>
-# <body>
-
-# <h1>My First Heading</h1>
-
-# <p>My first paragraph.</p>
-
-# </body>
-# </html>
-# """.newStringBitStream
-# # var test = """
-# # <h1>My First Heading</h1>
-# # """.newStringBitStream
-# template condGet(field, parse, cond: untyped) =
-#   if cond:
-#       parse
-# template condPut(field, encode, cond: untyped) =
-#   if cond:
-#       encode
-# proc stop(s: Bitstream): bool =
-#     var pos = s.getPosition
-#     var ch = s.readStr(8)
-#     result = ch != "/"
-#     s.setPosition(pos)
-
-# createParser(html):
-#     s: text
-#     s: _ = "<"
-#     s {cond: s.stop}: tag
-#     s {cond: s.stop}: _ = ">"
-#     *html {cond: s.stop}: {children}
-#     s {cond: s.stop}: _ = "/"
-
-# var output = html.get(test)
-# print output
-# echo pretty %output
-# createParser(Header):
-#     s: name
-#     s: _ = ": "
-#     s: value
-#     s: _ = "\n"
-# createParser(HTTP):
-#     s: _ = "HTTP/"
-#     s: version
-#     s: _ = " "
-#     s {@get: _.parseInt, @set: $_}: code
-#     s: _ = " "
-#     s: msg
-#     s: _ = "\n"
-#     *Header: {headers}
-#     s: _ = "\n"
-#     s: body(headers.filterIt(it.name == "Content-Length")[0].value.parseInt)
-
-# var sbs = newStringBitStream(msg)
-# var data = HTTP.get(sbs)
-# echo data.code + 10
-# var gen: typeGetter(HTTP)
-# gen.body = "asdfasdfasdf"
-# var content: typeGetter(Header) = ("Content-Length", "10")
-# gen.version = "1.1"
-# gen.headers.add(content)
-# var gensbs = newStringBitStream()
-# HTTP.put(gensbs, gen)
-# gensbs.seek(0)
-# echo gensbs.readAll
-
-# var test = """
-# <html>
-# <body>
-
-# <h1>My First Heading</h1>
-
-# <p>My first paragraph.</p>
-
-# </body>
-# </html>
-# """.newStringBitStream
-# # var test = """
-# # <h1>My First Heading</h1>
-# # """.newStringBitStream
-# template condGet(field, parse, cond: untyped) =
-#   if cond:
-#       parse
-# template condPut(field, encode, cond: untyped) =
-#   if cond:
-#       encode
-# proc stop(s: Bitstream): bool =
-#     var pos = s.getPosition
-#     var ch = s.readStr(8)
-#     result = ch != "/"
-#     s.setPosition(pos)
-
-# createParser(html):
-#     s: text
-#     s: _ = "<"
-#     s {cond: s.stop}: tag
-#     s {cond: s.stop}: _ = ">"
-#     *html {cond: s.stop}: {children}
-#     s {cond: s.stop}: _ = "/"
-
-# var output = html.get(test)
-# print output
-# echo pretty %output
-nbShow
+Anyway, how do we hook this up to have a nicer interface? Now, our type looks like this:
+    """
+nbCode:
+    createParser(http3):
+        s: _ = "HTTP/"
+        s: version
+        s: _ = " "
+        s: code
+        s: _ = " "
+        s: msg
+        s: _ = "\n"
+        *header {@get: _.toTable, @set: _.toHeaders}: {headers}
+        s: _ = "\n"
+    echo msg.toHTTP3.headers["Content-Length"]
+nbText: """
+That's pretty neat! All that's missing now is the actual, you know, content bit. We want to read a string
+that is as long as the content length. Here's what that looks like:
+"""
+nbCode:
+    createParser(http4):
+        s: _ = "HTTP/"
+        s: version
+        s: _ = " "
+        s: code
+        s: _ = " "
+        s: msg
+        s: _ = "\n"
+        *header {@get: _.toTable, @set: _.toHeaders}: {headers}
+        s: _ = "\n"
+        s: content(headers["Content-Length"].parseInt)
+    print msg.toHTTP4
+nbText: """We can now parse an entire HTTP response. Remember how at the start I said that we can also use
+this to serialize a full HTTP response? Let's try that.
+```nim
+    print HTTP4(version: "1.1", code: "200", msg: "OK", content: "Here I am!").fromHTTP4
+    # Error: unhandled exception: key not found: Content-Length [KeyError]
+```
+This doesn't quite work. We could provide the actual Content-Length manually, but that's
+a hassle, and somewhat error prone. Instead, we can try using `@hook` from binarylang, which
+runs code whenever a field is mutated.
+"""
+nbCode:
+    proc updateLength(headers: TableRef[string, string], length: string): auto =
+        headers["Content-Length"] = $length.len
+        return headers
+    createParser(http5):
+        s: _ = "HTTP/"
+        s: version
+        s: _ = " "
+        s: code
+        s: _ = " "
+        s: msg
+        s: _ = "\n"
+        *header {@get: _.toTable, @set: _.toHeaders}: {headers}
+        s: _ = "\n"
+        s {@hook: (headers = headers.updateLength(_))}: content(headers["Content-Length"].parseInt)
+    var response = HTTP5(version: "1.1", code: "200", msg: "OK")
+    response.content = "Here I am!"
+    echo response.fromHTTP5
+nbSave

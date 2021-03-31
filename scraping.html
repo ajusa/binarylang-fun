@@ -91,6 +91,8 @@ print website.toInformation</code></pre>
     Show(title:"That Time I Got Reincarnated as a Slime Season 2", seen:"5", total:"5")
   ]
 )</samp></pre>
+<p>And that's it! The only tricky part is figuring out when to stop parsing
+but so long as the website has some sort of structure this is pretty doable.</p>
 
 </main>
 <footer>
@@ -152,7 +154,10 @@ nbCode:
         *show: {shows}
         s: _ = <span class="hljs-string">&quot;&lt;/ul&gt;&quot;</span> <span class="hljs-comment"># Ends when the list ends</span>
     print website.toInformation
-
+nbText: <span class="hljs-string">&quot;&quot;&quot;
+And that's it! The only tricky part is figuring out when to stop parsing
+but so long as the website has some sort of structure this is pretty doable.
+&quot;&quot;&quot;</span>
 nbSave
 </code></pre>
 </section>

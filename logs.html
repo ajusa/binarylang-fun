@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en-us">
+<head>
+  <title>logs.nim</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2280%22>🐳</text></svg>">
+  <meta content="text/html; charset=utf-8" http-equiv="content-type">
+  <meta content="width=device-width, initial-scale=1" name="viewport">
+  <link rel='stylesheet' href='https://unpkg.com/normalize.css/'>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/kognise/water.css@latest/dist/light.min.css">
+  <link rel='stylesheet' href='https://cdn.jsdelivr.net/gh/pietroppeter/nimib/assets/atom-one-light.css'>
+  </head>
+<body>
+<header>
+<div id="header-box">
+<span id="home"><a href=".">🏡</a></span>
+<span id="header-title"><code>logs.nim</code></span>
+<span id="github"><a href="https://github.com/ajusa/binarylang-fun"><svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" aria-hidden="true" focusable="false" width="1.2em" height="1.2em" style="vertical-align: middle;" preserveAspectRatio="xMidYMid meet" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59c.4.07.55-.17.55-.38c0-.19-.01-.82-.01-1.49c-2.01.37-2.53-.49-2.69-.94c-.09-.23-.48-.94-.82-1.13c-.28-.15-.68-.52-.01-.53c.63-.01 1.08.58 1.23.82c.72 1.21 1.87.87 2.33.66c.07-.52.28-.87.51-1.07c-1.78-.2-3.64-.89-3.64-3.95c0-.87.31-1.59.82-2.15c-.08-.2-.36-1.02.08-2.12c0 0 .67-.21 2.2.82c.64-.18 1.32-.27 2-.27c.68 0 1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82c.44 1.1.16 1.92.08 2.12c.51.56.82 1.27.82 2.15c0 3.07-1.87 3.75-3.65 3.95c.29.25.54.73.54 1.48c0 1.07-.01 1.93-.01 2.2c0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z" fill="#000"></path></svg></a></span>
+</div>
+<style>
+div#header-box {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+</style>
+<hr>
+</header>
+<main>
+<h1>Parsing logs with Binarylang</h1>
+<p>One thing that most developers will have to do at least
+once in their life is be asked to parse some logs and extract
+some sort of meaningful data from them. How do you do that with
+binarylang? Here's an example from some web server logs.</p>
+<pre><code>180.247.21.245 - - 1607662825264 &quot;GET /?time=1607662824848&amp;random=9539&amp;webrtc=true&amp;websocket=true HTTP/1.1&quot; 200 4052 &quot;https://588.lan.wtf/start/&quot; &quot;Mozilla/5.0 (Linux; Android 10; vivo 2019; wv) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/62.0.3202.84 Mobile Safari/537.36 VivoBrowser/6.9.0.2&quot;
+140.213.7.82 - - 1607662825291 &quot;GET /?time=1607662823713&amp;random=2551&amp;webrtc=true&amp;websocket=true HTTP/1.1&quot; 200 4052 &quot;https://588.lan.wtf/start/&quot; &quot;Mozilla/5.0 (Linux; U; Android 10; id-id; Redmi 9 Build/QP1A.190711.020) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/71.0.3578.141 Mobile Safari/537.36 XiaoMi/MiuiBrowser/12.5.2-gn&quot;
+36.74.249.225 - - 1607662825567 &quot;GET /?time=1607662827811&amp;random=9694&amp;webrtc=true&amp;websocket=true HTTP/1.1&quot; 200 4052 &quot;https://588.lan.wtf/start/&quot; &quot;Mozilla/5.0 (Linux; U; Android 9; in-id; CPH1923 Build/PPR1.180610.011) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/70.0.3538.80 Mobile Safari/537.36 HeyTapBrowser/25.7.4.1&quot;
+140.213.154.35 - - 1607662825571 &quot;GET /?time=1607662823282&amp;random=8476&amp;webrtc=true&amp;websocket=true HTTP/1.1&quot; 200 4052 &quot;https://588.lan.wtf/start/&quot; &quot;Mozilla/5.0 (Linux; U; Android 10; in-id; CPH2127 Build/QKQ1.200614.002) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/70.0.3538.80 Mobile Safari/537.36 HeyTapBrowser/45.7.1.9&quot;
+116.206.15.45 - - 1607662825580 &quot;GET /?time=1607662824793&amp;random=1946&amp;webrtc=true&amp;websocket=true HTTP/1.1&quot; 200 4520 &quot;https://588.lan.wtf/start/&quot; &quot;Mozilla/5.0 (Linux; Android 7.0; SM-G610F) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.198 Mobile Safari/537.36&quot;
+125.166.126.137 - - 1607662825634 &quot;GET /?time=1607662824702&amp;random=828&amp;webrtc=true&amp;websocket=true HTTP/1.1&quot; 200 4520 &quot;https://588.lan.wtf/&quot; &quot;Mozilla/5.0 (iPhone; CPU iPhone OS 14_0_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.0 Mobile/15E148 Safari/604.1&quot;
+36.74.249.225 - - 1607662825676 &quot;GET /?time=1607662828645&amp;random=9694&amp;webrtc=true&amp;websocket=true HTTP/1.1&quot; 200 4052 &quot;https://588.lan.wtf/start/&quot; &quot;Mozilla/5.0 (Linux; U; Android 9; in-id; CPH1923 Build/PPR1.180610.011) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/70.0.3538.80 Mobile Safari/537.36 HeyTapBrowser/25.7.4.1&quot;
+36.74.249.225 - - 1607662825691 &quot;GET /?time=1607662828854&amp;random=9694&amp;webrtc=true&amp;websocket=true HTTP/1.1&quot; 200 4052 &quot;https://588.lan.wtf/start/&quot; &quot;Mozilla/5.0 (Linux; U; Android 9; in-id; CPH1923 Build/PPR1.180610.011) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/70.0.3538.80 Mobile Safari/537.36 HeyTapBrowser/25.7.4.1&quot;
+36.74.249.225 - - 1607662825693 &quot;GET /?time=1607662828956&amp;random=9694&amp;webrtc=true&amp;websocket=true HTTP/1.1&quot; 200 4052 &quot;https://588.lan.wtf/start/&quot; &quot;Mozilla/5.0 (Linux; U; Android 9; in-id; CPH1923 Build/PPR1.180610.011) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/70.0.3538.80 Mobile Safari/537.36 HeyTapBrowser/25.7.4.1&quot;
+140.213.7.82 - - 1607662825731 &quot;GET /?time=1607662824705&amp;random=2551&amp;webrtc=true&amp;websocket=true HTTP/1.1&quot; 200 387 &quot;https://588.lan.wtf/start/&quot; &quot;Mozilla/5.0 (Linux; U; Android 10; id-id; Redmi 9 Build/QP1A.190711.020) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/71.0.3578.141 Mobile Safari/537.36 XiaoMi/MiuiBrowser/12.5.2-gn&quot;
+36.74.249.225 - - 1607662825793 &quot;GET /?time=1607662829369&amp;random=9694&amp;webrtc=true&amp;websocket=true HTTP/1.1&quot; 200 4052 &quot;https://588.lan.wtf/start/&quot; &quot;Mozilla/5.0 (Linux; U; Android 9; in-id; CPH1923 Build/PPR1.180610.011) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/70.0.3538.80 Mobile Safari/537.36 HeyTapBrowser/25.7.4.1&quot;
+182.1.176.39 - - 1607662825866 &quot;GET /?time=1607662823609&amp;random=933&amp;webrtc=true&amp;websocket=true HTTP/1.1&quot; 200 4052 &quot;https://588.lan.wtf/start/&quot; &quot;Mozilla/5.0 (Linux; U; Android 10; in-id; RMX2030 Build/QKQ1.200209.002) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/70.0.3538.80 Mobile Safari/537.36 HeyTapBrowser/45.7.3.3.2&quot;
+114.125.164.230 - - 1607662825967 &quot;GET /?time=1607662825046&amp;random=584&amp;webrtc=true&amp;websocket=true HTTP/1.1&quot; 200 4520 &quot;https://588.lan.wtf/start/&quot; &quot;Mozilla/5.0 (Linux; Android 8.1.0; CPH1853) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.198 Mobile Safari/537.36&quot;
+36.74.249.225 - - 1607662826000 &quot;GET /?time=1607662829574&amp;random=9694&amp;webrtc=true&amp;websocket=true HTTP/1.1&quot; 200 4052 &quot;https://588.lan.wtf/start/&quot; &quot;Mozilla/5.0 (Linux; U; Android 9; in-id; CPH1923 Build/PPR1.180610.011) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/70.0.3538.80 Mobile Safari/537.36 HeyTapBrowser/25.7.4.1&quot;
+140.213.154.35 - - 1607662826081 &quot;GET /?time=1607662823784&amp;random=8476&amp;webrtc=true&amp;websocket=true HTTP/1.1&quot; 200 387 &quot;https://588.lan.wtf/start/&quot; &quot;Mozilla/5.0 (Linux; U; Android 10; in-id; CPH2127 Build/QKQ1.200614.002) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/70.0.3538.80 Mobile Safari/537.36 HeyTapBrowser/45.7.1.9&quot;
+36.74.249.225 - - 1607662826106 &quot;GET /?time=1607662829678&amp;random=9694&amp;webrtc=true&amp;websocket=true HTTP/1.1&quot; 200 387 &quot;https://588.lan.wtf/start/&quot; &quot;Mozilla/5.0 (Linux; U; Android 9; in-id; CPH1923 Build/PPR1.180610.011) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/70.0.3538.80 Mobile Safari/537.36 HeyTapBrowser/25.7.4.1&quot;
+114.124.209.59 - - 1607662826241 &quot;GET /?time=1607662825921&amp;random=4794&amp;webrtc=true&amp;websocket=true HTTP/1.1&quot; 200 4520 &quot;https://588.lan.wtf/start/&quot; &quot;Mozilla/5.0 (Linux; Android 9; RMX1821) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/71.0.3578.99 Mobile Safari/537.36&quot;
+114.125.228.129 - - 1607662826301 &quot;GET /?time=1607662823290&amp;random=3399&amp;webrtc=true&amp;websocket=true HTTP/1.1&quot; 200 4052 &quot;https://588.lan.wtf/start/&quot; &quot;Mozilla/5.0 (Linux; U; Android 9; in-id; CPH1933 Build/PKQ1.190714.001) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/70.0.3538.80 Mobile Safari/537.36 HeyTapBrowser/25.7.4.1&quot;
+36.74.249.225 - - 1607662826313 &quot;GET /?time=1607662829887&amp;random=9694&amp;webrtc=true&amp;websocket=true HTTP/1.1&quot; 200 387 &quot;https://588.lan.wtf/start/&quot; &quot;Mozilla/5.0 (Linux; U; Android 9; in-id; CPH1923 Build/PPR1.180610.011) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/70.0.3538.80 Mobile Safari/537.36 HeyTapBrowser/25.7.4.1&quot;
+116.206.15.45 - - 1607662826367 &quot;GET /?time=1607662826098&amp;random=1946&amp;webrtc=true&amp;websocket=true HTTP/1.1&quot; 200 380 &quot;https://588.lan.wtf/start/&quot; &quot;Mozilla/5.0 (Linux; Android 7.0; SM-G610F) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.198 Mobile Safari/537.36&quot;
+36.74.249.225 - - 1607662826417 &quot;GET /?time=1607662829989&amp;random=9694&amp;webrtc=true&amp;websocket=true HTTP/1.1&quot; 200 387 &quot;https://588.lan.wtf/start/&quot; &quot;Mozilla/5.0 (Linux; U; Android 9; in-id; CPH1923 Build/PPR1.180610.011) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/70.0.3538.80 Mobile Safari/537.36 HeyTapBrowser/25.7.4.1&quot;
+
+</code></pre>
+<p>That's a lot of stuff to parse. Thankfully, most of it appears to be
+between strings, therefore it is pretty straightforward to parse it with
+binarylang.</p>
+<pre><code class="nim hljs">createParser(record):
+    s: ip
+    s: _ = <span class="hljs-string">&quot; - - &quot;</span>
+    s: serverTime
+    s: _ = <span class="hljs-string">&quot;&quot;&quot; &quot;GET /?time=&quot;&quot;&quot;</span>
+    s: clientTime
+    s: _ = <span class="hljs-string">&quot;&amp;random=&quot;</span>
+    s: random
+    s: _ = <span class="hljs-string">&quot;&amp;webrtc=&quot;</span>
+    s: webrtc
+    s: _ = <span class="hljs-string">&quot;&amp;websocket=&quot;</span>
+    s: websocket
+    s: _ = <span class="hljs-string">&quot;&quot;&quot; HTTP/1.1&quot; 200 &quot;&quot;&quot;</span> 
+    s: _
+    s: _ = <span class="hljs-string">&quot;&quot;&quot; &quot;https://588.lan.wtf/start/&quot; &quot;&quot;&quot;&quot;</span>
+    s: useragent
+    s: _ = <span class="hljs-string">&quot;</span><span class="hljs-meta">\&quot;</span><span class="hljs-meta">\n</span><span class="hljs-string">&quot;</span>
+print log.toRecord
+<span class="hljs-keyword">echo</span> <span class="hljs-type">Record</span>(
+    ip: <span class="hljs-string">&quot;localhost&quot;</span>, serverTime: <span class="hljs-string">&quot;500&quot;</span>, clientTime: <span class="hljs-string">&quot;600&quot;</span>, random: <span class="hljs-string">&quot;23&quot;</span>,
+    webrtc: <span class="hljs-string">&quot;true&quot;</span>, websocket: <span class="hljs-string">&quot;true&quot;</span>, useragent: <span class="hljs-string">&quot;Chrome&quot;</span>
+).fromRecord</code></pre>
+<pre><samp>toRecord(log)=Record(
+  ip:"180.247.21.245",
+  serverTime:"1607662825264",
+  clientTime:"1607662824848",
+  random:"9539",
+  webrtc:"true",
+  websocket:"true",
+  useragent:"Mozilla/5.0 (Linux; Android 10; vivo 2019; wv) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/62.0.3202.84 Mobile Safari/537.36 VivoBrowser/6.9.0.2"
+)
+localhost - - 500 "GET /?time=600&random=23&webrtc=true&websocket=true HTTP/1.1" 200  "https://588.lan.wtf/start/" "Chrome"</samp></pre>
+<p>And there you have it. We can not only parse logs, but now we can also generate
+them if we wanted to. Lastly, we'll parse the entire thing into a sequence using binarylang.</p>
+<pre><code class="nim hljs">createParser(logs):
+    *record: records{s.atEnd}
+print log.toLogs.records[<span class="hljs-number">0.</span>.<span class="hljs-number">2</span>]</code></pre>
+<pre><samp>toLogs(log).records[0 .. 2]=@[
+  Record(
+    ip:"180.247.21.245",
+    serverTime:"1607662825264",
+    clientTime:"1607662824848",
+    random:"9539",
+    webrtc:"true",
+    websocket:"true",
+    useragent:"Mozilla/5.0 (Linux; Android 10; vivo 2019; wv) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/62.0.3202.84 Mobile Safari/537.36 VivoBrowser/6.9.0.2"
+  ),
+  Record(
+    ip:"140.213.7.82",
+    serverTime:"1607662825291",
+    clientTime:"1607662823713",
+    random:"2551",
+    webrtc:"true",
+    websocket:"true",
+    useragent:"Mozilla/5.0 (Linux; U; Android 10; id-id; Redmi 9 Build/QP1A.190711.020) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/71.0.3578.141 Mobile Safari/537.36 XiaoMi/MiuiBrowser/12.5.2-gn"
+  ),
+  Record(
+    ip:"36.74.249.225",
+    serverTime:"1607662825567",
+    clientTime:"1607662827811",
+    random:"9694",
+    webrtc:"true",
+    websocket:"true",
+    useragent:"Mozilla/5.0 (Linux; U; Android 9; in-id; CPH1923 Build/PPR1.180610.011) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/70.0.3538.80 Mobile Safari/537.36 HeyTapBrowser/25.7.4.1"
+  )
+]</samp></pre>
+
+</main>
+<footer>
+<hr>
+<span id="made">made with <a href="https://github.com/pietroppeter/nimib">nimib 🐳</a></span>
+<button id="show" onclick="toggleSourceDisplay()">Show Source</button>
+<section id="source">
+<pre><code class="nim hljs"><span class="hljs-keyword">import</span> binarylang, nimib, strutils, print, strformat
+printColors = <span class="hljs-literal">false</span>
+nbInit
+nbText:<span class="hljs-string">&quot;&quot;&quot;
+# Parsing logs with Binarylang
+
+One thing that most developers will have to do at least
+once in their life is be asked to parse some logs and extract
+some sort of meaningful data from them. How do you do that with
+binarylang? Here's an example from some web server logs.
+&quot;&quot;&quot;</span>
+<span class="hljs-keyword">var</span> log = readFile(<span class="hljs-string">&quot;example.log&quot;</span>)
+nbText: &amp;<span class="hljs-string">&quot;&quot;&quot;```
+{log}
+```&quot;&quot;&quot;</span>
+nbText: <span class="hljs-string">&quot;&quot;&quot;
+That's a lot of stuff to parse. Thankfully, most of it appears to be
+between strings, therefore it is pretty straightforward to parse it with
+binarylang.
+&quot;&quot;&quot;</span>
+nbCode:
+    createParser(record):
+        s: ip
+        s: _ = <span class="hljs-string">&quot; - - &quot;</span>
+        s: serverTime
+        s: _ = <span class="hljs-string">&quot;&quot;&quot; &quot;GET /?time=&quot;&quot;&quot;</span>
+        s: clientTime
+        s: _ = <span class="hljs-string">&quot;&amp;random=&quot;</span>
+        s: random
+        s: _ = <span class="hljs-string">&quot;&amp;webrtc=&quot;</span>
+        s: webrtc
+        s: _ = <span class="hljs-string">&quot;&amp;websocket=&quot;</span>
+        s: websocket
+        s: _ = <span class="hljs-string">&quot;&quot;&quot; HTTP/1.1&quot; 200 &quot;&quot;&quot;</span> 
+        s: _
+        s: _ = <span class="hljs-string">&quot;&quot;&quot; &quot;https://588.lan.wtf/start/&quot; &quot;&quot;&quot;&quot;</span>
+        s: useragent
+        s: _ = <span class="hljs-string">&quot;</span><span class="hljs-meta">\&quot;</span><span class="hljs-meta">\n</span><span class="hljs-string">&quot;</span>
+    print log.toRecord
+    <span class="hljs-keyword">echo</span> <span class="hljs-type">Record</span>(
+        ip: <span class="hljs-string">&quot;localhost&quot;</span>, serverTime: <span class="hljs-string">&quot;500&quot;</span>, clientTime: <span class="hljs-string">&quot;600&quot;</span>, random: <span class="hljs-string">&quot;23&quot;</span>,
+        webrtc: <span class="hljs-string">&quot;true&quot;</span>, websocket: <span class="hljs-string">&quot;true&quot;</span>, useragent: <span class="hljs-string">&quot;Chrome&quot;</span>
+    ).fromRecord
+nbText: <span class="hljs-string">&quot;&quot;&quot;
+And there you have it. We can not only parse logs, but now we can also generate
+them if we wanted to. Lastly, we'll parse the entire thing into a sequence using binarylang.
+&quot;&quot;&quot;</span>
+nbCode:
+    createParser(logs):
+        *record: records{s.atEnd}
+    print log.toLogs.records[<span class="hljs-number">0.</span>.<span class="hljs-number">2</span>]
+nbSave
+</code></pre>
+</section>
+<script>
+function toggleSourceDisplay() {
+  var btn = document.getElementById("show")
+  var source = document.getElementById("source");
+  if (btn.innerHTML=="Show Source") {
+    btn.innerHTML = "Hide Source";
+    source.style.display = "block";
+  } else {
+    btn.innerHTML = "Show Source";
+    source.style.display = "none";
+  }
+}
+</script>
+<style>
+span#made {
+  font-size: 0.8rem;
+}
+button#show {
+  font-size: 0.8rem;
+}
+
+button#show {
+  float: right;
+  padding: 2px;
+  padding-right: 5px;
+  padding-left: 5px;
+}
+section#source {
+  display:none
+}
+</style>
+</footer>
+</body>
+</html>

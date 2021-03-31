@@ -49,4 +49,8 @@ nbCode:
     createParser(logs):
         *record: records{s.atEnd}
     print log.toLogs.records[0..2]
+nbText: """
+We tell binarylang to keep parsing each log line until we hit the end
+of the file (that is what the curly braces after the field indicate.)
+"""
 nbSave

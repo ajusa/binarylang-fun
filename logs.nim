@@ -19,7 +19,7 @@ between strings, therefore it is pretty straightforward to parse it with
 binarylang.
 """
 nbCode:
-    createParser(record):
+    struct(record):
         s: ip
         s: _ = " - - "
         s: serverTime
@@ -46,7 +46,7 @@ And there you have it. We can not only parse logs, but now we can also generate
 them if we wanted to. Lastly, we'll parse the entire thing into a sequence using binarylang.
 """
 nbCode:
-    createParser(logs):
+    struct(logs):
         *record: records{s.atEnd}
     print log.toLogs.records[0..2]
 nbText: """

@@ -57,7 +57,7 @@ binarylang? Here's an example from some web server logs.</p>
 <p>That's a lot of stuff to parse. Thankfully, most of it appears to be
 between strings, therefore it is pretty straightforward to parse it with
 binarylang.</p>
-<pre><code class="nim hljs">createParser(record):
+<pre><code class="nim hljs">struct(record):
     s: ip
     s: _ = <span class="hljs-string">&quot; - - &quot;</span>
     s: serverTime
@@ -91,7 +91,7 @@ print log.toRecord
 localhost - - 500 "GET /?time=600&random=23&webrtc=true&websocket=true HTTP/1.1" 200  "https://588.lan.wtf/start/" "Chrome"</samp></pre>
 <p>And there you have it. We can not only parse logs, but now we can also generate
 them if we wanted to. Lastly, we'll parse the entire thing into a sequence using binarylang.</p>
-<pre><code class="nim hljs">createParser(logs):
+<pre><code class="nim hljs">struct(logs):
     *record: records{s.atEnd}
 print log.toLogs.records[<span class="hljs-number">0.</span>.<span class="hljs-number">2</span>]</code></pre>
 <pre><samp>toLogs(log).records[0 .. 2]=@[
@@ -153,7 +153,7 @@ between strings, therefore it is pretty straightforward to parse it with
 binarylang.
 &quot;&quot;&quot;</span>
 nbCode:
-    createParser(record):
+    struct(record):
         s: ip
         s: _ = <span class="hljs-string">&quot; - - &quot;</span>
         s: serverTime
@@ -180,7 +180,7 @@ And there you have it. We can not only parse logs, but now we can also generate
 them if we wanted to. Lastly, we'll parse the entire thing into a sequence using binarylang.
 &quot;&quot;&quot;</span>
 nbCode:
-    createParser(logs):
+    struct(logs):
         *record: records{s.atEnd}
     print log.toLogs.records[<span class="hljs-number">0.</span>.<span class="hljs-number">2</span>]
 nbText: <span class="hljs-string">&quot;&quot;&quot;

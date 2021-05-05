@@ -58,26 +58,26 @@ the title attribute, having an entire other element inside of it.</p>
 Hm, it looks like the title is between <code>&lt;h5 class='theme-font'&gt;</code> and <code>&lt;/h5&gt;</code>, and the
 watch status is also between some strings. Let's try it!</p>
 <pre><code class="nim hljs">createParser(show):
-    s: _ <span class="hljs-comment"># skip until we see the next field</span>
-    s: _ = <span class="hljs-string">&quot;&lt;h5 class='theme-font'&gt;&quot;</span>
-    s: title
-    s: _ = <span class="hljs-string">&quot;&lt;/h5&gt;&quot;</span>
-    s: _
-    s: _ = <span class="hljs-string">&quot;Watching - &quot;</span>
-    s: seen
-    s: _ = <span class="hljs-string">&quot;/&quot;</span>
-    s: total
-    s: _ = <span class="hljs-string">&quot; eps&quot;</span>
-    s: _
-    s: _ = <span class="hljs-string">&quot;&lt;/li&gt;&quot;</span> <span class="hljs-comment"># Read until the end of the item</span>
+  s: _ <span class="hljs-comment"># skip until we see the next field</span>
+  s: _ = <span class="hljs-string">&quot;&lt;h5 class='theme-font'&gt;&quot;</span>
+  s: title
+  s: _ = <span class="hljs-string">&quot;&lt;/h5&gt;&quot;</span>
+  s: _
+  s: _ = <span class="hljs-string">&quot;Watching - &quot;</span>
+  s: seen
+  s: _ = <span class="hljs-string">&quot;/&quot;</span>
+  s: total
+  s: _ = <span class="hljs-string">&quot; eps&quot;</span>
+  s: _
+  s: _ = <span class="hljs-string">&quot;&lt;/li&gt;&quot;</span> <span class="hljs-comment"># Read until the end of the item</span>
 print website.toShow</code></pre>
 <pre><samp>toShow(website)=Show(title:"Bottom-tier Character Tomozaki", seen:"5", total:"6")</samp></pre>
 <p>Wasn't that super easy! You don't need to parse the HTML dom, don't need
 to figure out any regex, and you get a normal Nim type to work with! Now, let's
 generalize this to all of the shows.</p>
 <pre><code class="nim hljs">createParser(information):
-    *show: {shows}
-    s: _ = <span class="hljs-string">&quot;&lt;/ul&gt;&quot;</span> <span class="hljs-comment"># Ends when the list ends</span>
+  *show: {shows}
+  s: _ = <span class="hljs-string">&quot;&lt;/ul&gt;&quot;</span> <span class="hljs-comment"># Ends when the list ends</span>
 print website.toInformation</code></pre>
 <pre><samp>toInformation(website)=Information(
   shows:@[
@@ -129,20 +129,20 @@ Hm, it looks like the title is between `&lt;h5 class='theme-font'&gt;` and `&lt;
 watch status is also between some strings. Let's try it!
 &quot;&quot;&quot;</span>
 nbCode:
-    createParser(show):
-        s: _ <span class="hljs-comment"># skip until we see the next field</span>
-        s: _ = <span class="hljs-string">&quot;&lt;h5 class='theme-font'&gt;&quot;</span>
-        s: title
-        s: _ = <span class="hljs-string">&quot;&lt;/h5&gt;&quot;</span>
-        s: _
-        s: _ = <span class="hljs-string">&quot;Watching - &quot;</span>
-        s: seen
-        s: _ = <span class="hljs-string">&quot;/&quot;</span>
-        s: total
-        s: _ = <span class="hljs-string">&quot; eps&quot;</span>
-        s: _
-        s: _ = <span class="hljs-string">&quot;&lt;/li&gt;&quot;</span> <span class="hljs-comment"># Read until the end of the item</span>
-    print website.toShow
+  createParser(show):
+    s: _ <span class="hljs-comment"># skip until we see the next field</span>
+    s: _ = <span class="hljs-string">&quot;&lt;h5 class='theme-font'&gt;&quot;</span>
+    s: title
+    s: _ = <span class="hljs-string">&quot;&lt;/h5&gt;&quot;</span>
+    s: _
+    s: _ = <span class="hljs-string">&quot;Watching - &quot;</span>
+    s: seen
+    s: _ = <span class="hljs-string">&quot;/&quot;</span>
+    s: total
+    s: _ = <span class="hljs-string">&quot; eps&quot;</span>
+    s: _
+    s: _ = <span class="hljs-string">&quot;&lt;/li&gt;&quot;</span> <span class="hljs-comment"># Read until the end of the item</span>
+  print website.toShow
 
 nbText: <span class="hljs-string">&quot;&quot;&quot;
 Wasn't that super easy! You don't need to parse the HTML dom, don't need
@@ -150,10 +150,10 @@ to figure out any regex, and you get a normal Nim type to work with! Now, let's
 generalize this to all of the shows.
 &quot;&quot;&quot;</span>
 nbCode:
-    createParser(information):
-        *show: {shows}
-        s: _ = <span class="hljs-string">&quot;&lt;/ul&gt;&quot;</span> <span class="hljs-comment"># Ends when the list ends</span>
-    print website.toInformation
+  createParser(information):
+    *show: {shows}
+    s: _ = <span class="hljs-string">&quot;&lt;/ul&gt;&quot;</span> <span class="hljs-comment"># Ends when the list ends</span>
+  print website.toInformation
 nbText: <span class="hljs-string">&quot;&quot;&quot;
 And that's it! The only tricky part is figuring out when to stop parsing
 but so long as the website has some sort of structure this is pretty doable.
